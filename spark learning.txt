@@ -1,0 +1,176 @@
+Buvan
+CCA 175 Required Skills:
+
+Data Ingest
+
+The skills to transfer data between external systems and your cluster. This includes the following:
+
+Import data from a MySQL database into HDFS using Sqoop
+Export data to a MySQL database from HDFS using Sqoop
+Change the delimiter and file format of data during import using Sqoop
+Ingest real-time and near-real time (NRT) streaming data into HDFS using Flume
+Load data into and out of HDFS using the Hadoop File System (FS) commands
+Transform, Stage, Store
+
+Convert a set of data values in a given format stored in HDFS into new data values and/or a new data format and write them into HDFS. 
+This includes writing Spark applications in both Scala and Python (see note above on exam question format for more information on using either Scala or Python):
+
+Load data from HDFS and store results back to HDFS using Spark
+Join disparate datasets together using Spark
+Calculate aggregate statistics (e.g., average or sum) using Spark
+Filter data into a smaller dataset using Spark
+Write a query that produces ranked or sorted data using Spark
+Data Analysis
+
+Use Data Definition Language (DDL) to create tables in the Hive metastore for use by Hive and Impala.
+
+Read and/or create a table in the Hive metastore in a given schema
+Extract an Avro schema from a set of datafiles using avro-tools
+Create a table in the Hive metastore using the Avro file format and an external schema file
+Improve query performance by creating partitioned tables in the Hive metastore
+Evolve an Avro schema by changing JSON files
+
+
+
+sqoop:
+
+To check the dbs and tables:
+sqoop list-databases --connect jdbc:mysql://quickstart.cloudera:3306/ --username retail_dba --password cloudera
+sqoop list-tables --connect jdbc:mysql://quickstart.cloudera:3306/retail_dba --username retail_dba --password cloudera
+sqoop eval --connect jdbc:mysql://quickstart.cloudera:3306/retail_dba --username retail_dba --password cloudera \
+--query "select * from departments"
+
+Flume:
+--Below is worked fine using telnet via logger sync(not hdfs): any of below method will work fine..
+-- all configuration file details are present in /home/cloudera/flume/conf directory. Please check it out.
+flume-ng agent --name a1 --conf /home/cloudera/flume/conf --conf-file /home/cloudera/flume/conf/example.conf 
+flume-ng agent --n    a1 -c     /home/cloudera/flume/conf -f          /home/cloudera/flume/conf/example_hdfs.conf
+flume-ng agent --n a1 -c . -f example_hdfs.conf   (because we are running in conf directory, so . is enough)
+
+
+how to check sqoop version:
+$sqoop version
+
+how to check hadoop version:
+$hadoop version
+
+flume-ng version
+
+check the correct path name if you are not sure:
+$which spark-shell
+/usr/bin/spark-shell
+
+/home/cloudera/Downloads/Learning/dept
+
+1 ECE
+2 CSC
+3 IT
+4 CIVIL
+5 MECH
+6 EEE
+7 BIO-TECH
+9 asdfd
+8 MARINE
+
+
+Run python from local file:
+
+[cloudera@quickstart bin]$ pwd
+/home/cloudera/Downloads/spark-2.0.0-bin-hadoop2.7/bin
+[cloudera@quickstart bin]$ ./pyspark --master local
+
+>>> for recs in sc.textFile("/home/cloudera/Downloads/Learning/dept").collect():
+...   print(recs);
+... 
+
+--Run pyspark in Hve context:
+>>> from pyspark.sql import HiveContext
+>>> sqlContext = HiveContext(sc)
+>>> emp = sqlContext.sql("select * from employee")
+--python code to read the above RDD:
+>>> for recs in emp.collect():
+...    print(recs)
+
+--Result:
+Row(empid=3678945, name=u'Naga', salary=70000, dept=12)
+Row(empid=None, name=None, salary=None, dept=None)
+Row(empid=460207, name=u'buvan', salary=50000, dept=10)
+Row(empid=123546, name=u'praveen', salary=30000, dept=15)
+Row(empid=456789, name=u'karuna', salary=35000, dept=15)
+Row(empid=789456, name=u'Ram', salary=60000, dept=5)
+
+mysql java connector will reside in /usr/share/java/mysql-connector-java-5.1.34-bin.jar
+
+
+
+
+
+Run scala from local file:
+
+[cloudera@quickstart bin]$ ./spark-shell --master local
+scala> sc.textFile("/home/cloudera/Downloads/Learning/dept").count()
+res0: Long = 8
+
+to run from hdfs: just give spark-shell anywhere and it will initiate spark.
+sc.textFile("/user/Learning/dept").count()
+
+
+ps -fu hdfs
+ps -fu yarn
+
+
+Hive configuration files will be present in either of below location:
+/etc/hive/conf
+/etc/hadoop/conf
+
+hive-site.xml should be accessible in spark context. For that we have created a soft link of /etc/hive/conf/hive-site.xml into /etc/spark/conf/hive-site.xml
+pwd is => /etc/hive/conf/
+ln -s /etc/hive/conf/hive-site.xml  /etc/spark/conf/hive-site.xml
+
+--run hive query in scala. Here dept table is used.
+sqlContext.sql("select * from dept").collect().foreach(println)
+sqlContext.sql("select * from dept").count()
+
+
+
+download sbt from net, extract and install it.
+change the path variable in ~.bash_profile as below:
+
+SBT_HOME=/home/cloudera/sbt
+export PATH=$PATH:$SBT_HOME/bin
+
+once done, we need to restart the bash profile as below:
+. ~/.bash_profile 
+
+to find the all environment varialbes, just type env
+[cloudera@quickstart ~]$ env
+
+> [cloudera@quickstart ~]$ env|grep -i sbt
+PATH=/usr/local/firefox:/sbin:/usr/java/jdk1.7.0_67-cloudera/bin:/usr/local/apache-ant/apache-ant-1.9.2/bin:/usr/local/apache-maven/apache-maven-3.0.4/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:/home/cloudera/bin:/home/cloudera/bin:/home/cloudera/sbt/bin
+
+import org.apache.spark.SparkContext, org.apache.spark.SparkConf
+object SimpleApp {
+  def main(args: Array[String]) {
+    val conf = new SparkConf().setAppName("scala spark")
+    val sc = new SparkContext(conf)
+    val dataRDD = sc.textFile("/user/cloudera/employee")
+    dataRDD.saveAsTextFile("/user/cloudera/scalaspark/employee")
+  }
+}
+Save this to a file with scala extension
+Compile into jar file
+sbt package
+Run it using spark-submit in native mode:
+
+spark-submit --class "SimpleApp" /home/cloudera/scala/target/scala-2.10/simple-project_2.10-1.0.jar
+
+-- git path:
+https://github.com/dgadiraju/code/blob/master/hadoop/edw/cloudera/spark/spark_demo_scala.txt
+
+
+
+
+
+	
+	
+
